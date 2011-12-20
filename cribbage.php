@@ -1,7 +1,7 @@
 <?php
 
 /*
- 	Cribbage Scorer v0.1 - 20 Dec 2011 - neckro@gmail.com
+	Cribbage Scorer v0.11 - 20 Dec 2011 - neckro@gmail.com
 	Do whatever you want with this.  No warranty, no license, no problem.
 	Likely contains questionable design decisions and even more questionable PHP code.
 	Requires no PHP modules but should be PHP 5.3 or better.
@@ -108,37 +108,24 @@ class hand {
 		$run_min = 3;
 		if ($this->is_empty) return array();
 		$runs = array();
-		$hand = $this->hand;
-		$used = array();
-		foreach($hand as $n) $used[] = false;
+		$hand = array_unique($this->hand, SORT_NUMERIC);
+		sort($hand);	// normalize array keys because array_unique leaves gaps
 
-		// there's probably a more elegant way to do this; way inefficient with large hand sizes but manageable with normal ones
-		for($n=0; $n<count($hand); $n++) {
-			if($used[$n] === true) continue;
-			$testrun = array($hand[$n]);
-			$testused = $used;
-			foreach(array(-1, 1) as $m) {
-				for($spread=1; true; $spread++) {
-					$test = $hand[$n] + ($spread * $m);
-					if ($test > 13 || $test < 1) break;
-					$valid = false;
-					for($x=0; $x<count($hand); $x++) {
-						if ($hand[$x] == $test && $testused[$x] === false) {
-							$testrun[] = $test;
-							$testused[$x] = true;
-							$valid = true;
-							break;
-						}
-					}
-					if ($valid === false) break;
-				}
+		$pos = $hand[0];
+		$run = array($pos);
+		for($n=1; $n<count($hand); $n++) {
+			$test = $hand[$n];
+			if ($test == $pos+1) {
+				$run[] = $test;
+				$pos = $test;
+				continue;
 			}
-			if (count($testrun) >= $run_min) {	// got one
-				sort($testrun);
-				for($x=0; $x<count($testused); $x++) if ($testused[$x] === true) $used[$x] = true;
-				$runs[] = $testrun;
-			}
-		}	// else try next card
+			// end of run
+			if (count($run) >= $run_min) $runs[] = $run;
+			$run = array($test);
+			$pos = $test;
+		}
+		if (count($run) >= $run_min) $runs[] = $run;
 		return $runs;
 	}
 
