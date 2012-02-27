@@ -18,8 +18,8 @@
 	For the lazy and forgetful, a cheat sheet is provided on the page.
 */
 
-$players = intval($_GET['players']);
-if (empty($players)) $players = 4;		// default number of players
+$players = @(int)$_GET['players'];
+if ($players<1) $players = 4;		// default number of players
 
 class hand {
 	protected static $default_glue = '';
@@ -198,7 +198,7 @@ table tr td:first-child {
 </style>
 
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-
+<title>Fancy Cribbage Scorer</title>
 </head>
 <body>
 
@@ -207,7 +207,7 @@ table tr td:first-child {
 <h1 style="text-align: center; font-family: fantasy; margin: .5em auto;">Fancy Cribbage Scorer</h1>
 
 <table>
-	<?php echo printTable($_POST['starter'], $_POST['hands']); ?>
+	<?php echo printTable(@$_POST['starter'], @$_POST['hands']); ?>
 	<tr><td></td><td><input type="submit" /><input type="button" value="Reset" id="resetButton" /></td><td></td></tr>
 </table>
 
