@@ -1,7 +1,7 @@
 <?php
 
 /*
-	Cribbage Scorer v0.11 - 20 Dec 2011 - neckro@gmail.com
+	Cribbage Scorer v0.12 - 14 Aug 2012 - neckro@gmail.com
 	Do whatever you want with this.  No warranty, no license, no problem.
 	Likely contains questionable design decisions and even more questionable PHP code.
 	Requires no PHP modules but should be PHP 5.3 or better.
@@ -19,12 +19,13 @@
 */
 
 $players = @(int)$_GET['players'];
-if ($players<1) $players = 4;		// default number of players
+if ($players<1)
+	$players = 4; // default number of players
 
-class hand {
+class Hand {
 	protected static $default_glue = '';
-	protected $hand = '';		// array of card values
-	protected $starter = '';	// string for starter card
+	protected $hand = ''; // array of card values
+	protected $starter = ''; // string for starter card
 	public $is_empty = true;
 
 	public function __construct($starter, $hand) {
@@ -32,40 +33,49 @@ class hand {
 		// $hand = player's hand as raw string
 		$this->starter = self::normalizeCards($starter);
 		$this->hand = self::parseCards($hand.$this->starter);
-		if (count($this->hand) > strlen($this->starter)) $this->is_empty = false;
+		if (count($this->hand) > strlen($this->starter))
+			$this->is_empty = false;
 	}
 
- 	public function printHand($glue='') {
+	public function printHand($glue='') {
 		$h = self::printCards($this->hand);
-		if (empty($this->starter)) return $h;
+		if (empty($this->starter))
+			return $h;
 		$p = strpos($h, $this->starter);
 		// remove the starter card from the list, surely there must be a better way to do this
 		return substr($h, 0, $p) . substr($h, $p+strlen($this->starter));
 	}
 
 	public function printScore() {
-		if ($this->is_empty) return '';
+		if ($this->is_empty)
+			return '';
 		$score = 0;
 		$scoreitems = array();
 
-		$runs = $this->findRuns();
-		foreach ($runs as $run) {
+		$runlist = $this->findRuns();
+		foreach ($runlist as $run) {
 			$runcount = 1;
 			$runlength = count($run);
-			foreach ($run as $c) foreach ($this->hand as $p) if ($c==$p) $runcount++;
+			foreach ($run as $c)
+				foreach ($this->hand as $p)
+					if ($c==$p)
+						$runcount++;
 			$runcount -= $runlength;
 			$scoreitems[] = $this::tuples($runcount) . " run of $runlength";
-			$score += $runlength * $runcount;	// run score
+			$score += $runlength * $runcount; // run score
 		}
 		$pairs = $this->findPairs();
 		$paircount = count($pairs);
-		if ($paircount > 0) $scoreitems[] = "$paircount pair".($paircount>1?'s':'');
-		$score += $paircount * 2;			// pairs score
+		if ($paircount > 0)
+			$scoreitems[] = "$paircount pair".($paircount>1?'s':'');
+		$score += $paircount * 2; // pairs score
 		$fifteenscount = $this->findCardTotal(15);
-		if ($fifteenscount > 0) $scoreitems[] = "$fifteenscount fifteen".($fifteenscount>1?'s':'');
-		$score += $fifteenscount * 2;		// fifteens score
+		if ($fifteenscount > 0)
+			$scoreitems[] = "$fifteenscount fifteen".($fifteenscount>1?'s':'');
+		$score += $fifteenscount * 2; // fifteens score
 
-		if ($score == 0) return "No score.";
+		if ($score == 0)
+			return "No score.";
 		return implode(" + ", $scoreitems) . " = $score";
 	}
 
@@ -74,7 +84,8 @@ class hand {
 		$pairs = array();
 		for($n=0; $n<=count($this->hand); $n++) {
 			for($r=1; $r<count($this->hand)-$n; $r++) {
-				if ($this->hand[$n] == $this->hand[$n+$r]) $pairs[] = $this->hand[$n];
+				if ($this->hand[$n] == $this->hand[$n+$r])
+					$pairs[] = $this->hand[$n];
 			}
 		}
 		sort($pairs);
@@ -84,7 +95,8 @@ class hand {
 	protected function findCardTotal($total = 15) {
 		// return number of times hand can add up to $total
 		$hand = array();
-		foreach($this->hand as $h) $hand[] = ($h>10?10:$h);	// clamp hand values
+		foreach($this->hand as $h)
+			$hand[] = ($h>10?10:$h); // clamp hand values
 		$count = 0;
 		$bits = count($hand);
 		$max = pow(2, $bits);
@@ -94,11 +106,13 @@ class hand {
 			$t = 0;
 			for($b=$bits-1; $b>=0; $b--) {
 				$s = $r-pow(2, $b);
-				if ($s<0) continue;
+				if ($s<0)
+					continue;
 				$r = $s;
 				$t += $hand[$b];
 			}
-			if ($t==$total) $count++;
+			if ($t==$total)
+				$count++;
 		}
 		return $count;
 	}
@@ -106,10 +120,11 @@ class hand {
 	protected function findRuns() {
 		// returns an array of all runs of run_min or more cards
 		$run_min = 3;
-		if ($this->is_empty) return array();
-		$runs = array();
+		if ($this->is_empty)
+			return array();
+		$runlist = array();
 		$hand = array_unique($this->hand, SORT_NUMERIC);
-		sort($hand);	// normalize array keys because array_unique leaves gaps
+		sort($hand); // normalize array keys because array_unique leaves gaps
 
 		$pos = $hand[0];
 		$run = array($pos);
@@ -121,30 +136,37 @@ class hand {
 				continue;
 			}
 			// end of run
-			if (count($run) >= $run_min) $runs[] = $run;
+			if (count($run) >= $run_min)
+				$runlist[] = $run;
 			$run = array($test);
 			$pos = $test;
 		}
-		if (count($run) >= $run_min) $runs[] = $run;
-		return $runs;
+		if (count($run) >= $run_min)
+			$runlist[] = $run;
+		return $runlist;
 	}
 
-	public static function parseCards($input) {		// parse string to array of card values
+	public static function parseCards($input) { // parse string to array of card values
 		$cards = self::cardValues();
 		$output = array();
-		foreach(str_split(strtoupper($input)) as $c) if (array_key_exists($c, $cards)) $output[] = $cards[$c];
+		foreach(str_split(strtoupper($input)) as $c)
+			if (array_key_exists($c, $cards))
+				$output[] = $cards[$c];
 		sort($output, SORT_NUMERIC);
-		if ($output == false) return array();
+		if ($output == false)
+			return array();
 		return $output;
 	}
 	public static function printCards($input, $glue='') {		// print array of card values to string
-		if (empty($input) || !is_array($input)) return '';
+		if (empty($input) || !is_array($input))
+			return '';
 		$cards = self::cardValues();
 		$output = '';
 		sort($input, SORT_NUMERIC);
 		foreach($input as $c) {
 			$n = array_search($c, $cards);
-			if ($n) $output .= $n;
+			if ($n)
+				$output .= $n;
 		}
 		return strtoupper($output);
 	}
@@ -153,14 +175,16 @@ class hand {
 	}
 	public static function cardValues() {
 		$cards = array('A'=>1, 'T'=>10, 'J'=>11, 'Q'=>12,'K'=>13);
-		for($n=2;$n<10;$n++) $cards[(string)$n] = (int)$n;
+		for($n=2;$n<10;$n++)
+			$cards[(string)$n] = $n;
 		asort($cards);
 		return $cards;
 	}
 	public static function tuples($n) {
 		$n = intval($n);
 		$tuples = array('Single','Double','Triple','Quadruple');
-		if ($n>count($tuples)) return 'Impossible';
+		if ($n>count($tuples))
+			return 'Impossible';
 		return $tuples[$n-1];
 	}
 }
@@ -168,12 +192,12 @@ class hand {
 function printTable($starter, $hands) {
 	global $players;
 
-	$starter = hand::normalizeCards($starter);
+	$starter = Hand::normalizeCards($starter);
 	$out  = '<tr><td>Starter:</td><td><input class="resettable" value="'.$starter.'" id="starter" name="starter" type="text" size="1" />';
 	$out .= "</td><td></td></tr>\n";
 
 	for($p=0; $p<=$players; $p++) {
-		$score = new hand($starter, $hands[$p]);
+		$score = new Hand($starter, $hands[$p]);
 		$out .= "<tr><td>";
 		$out .= ($p==0 ? 'Crib' : "Player $p") . ":</td><td>";
 		$out .= '<input class="resettable" type="text" value="'.$score->printHand().'" name="hands['.$p.']" /></td><td>';
@@ -197,7 +221,7 @@ table tr td:first-child {
 }
 </style>
 
-<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
 <title>Fancy Cribbage Scorer</title>
 </head>
 <body>
@@ -225,8 +249,10 @@ table tr td:first-child {
 </p></div>
 
 <script type="text/javascript">
-	$('#starter').focus();
-	$('#resetButton').click(function() { $('.resettable').val(''); });
+	$(document).ready(function() {
+		$('#starter').focus();
+		$('#resetButton').click(function() { $('.resettable').val(''); });
+	});
 </script>
 
 </body>
