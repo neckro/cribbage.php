@@ -1,7 +1,7 @@
 <?php
 
 /*
-	Cribbage Scorer v0.12 - 14 Aug 2012 - neckro@gmail.com
+	Cribbage Scorer v0.13 - 7 Dec 2012 - neckro@gmail.com
 	Do whatever you want with this.  No warranty, no license, no problem.
 	Likely contains questionable design decisions and even more questionable PHP code.
 	Requires no PHP modules but should be PHP 5.3 or better.
@@ -125,24 +125,23 @@ class Hand {
 		$runlist = array();
 		$hand = array_unique($this->hand, SORT_NUMERIC);
 		sort($hand); // normalize array keys because array_unique leaves gaps
+		$hand[] = 0; // terminate final run
 
 		$pos = $hand[0];
 		$run = array($pos);
 		for($n=1; $n<count($hand); $n++) {
 			$test = $hand[$n];
 			if ($test == $pos+1) {
-				$run[] = $test;
+				// add to run
+				$run[] = $pos = $test;
+			} else {
+				// end of current run, see if it qualifies
+				if (count($run) >= $run_min)
+					$runlist[] = $run;
+				$run = array($test);
 				$pos = $test;
-				continue;
 			}
-			// end of run
-			if (count($run) >= $run_min)
-				$runlist[] = $run;
-			$run = array($test);
-			$pos = $test;
 		}
-		if (count($run) >= $run_min)
-			$runlist[] = $run;
 		return $runlist;
 	}
 
@@ -240,8 +239,8 @@ table tr td:first-child {
 <div style="text-align: center;"><p>
 
 <b>Extra Scoring</b>
-<br />4-Card Flush ... 5
-<br />5-Card Flush ... 6
+<br />4-Card Flush (No Crib) ... 4
+<br />5-Card Flush ... 5
 <br />(Crib flush must include Starter card)
 <br />Jack starter card (Heels) ... 2 to dealer
 <br />Jack of same suit as starter card (Knobs) ... 1
